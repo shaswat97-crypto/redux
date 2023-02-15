@@ -32,6 +32,18 @@ export const fetchPosts = createAsyncThunk("posts/fetchPosts", async () => {
   // console.log('fetch', data)
   return data;
 });
+
+export const addNewPost = createAsyncThunk(
+  "posts/addNewPost",
+  async (initialPost) => {
+    try {
+      const res = await axios.post(POSTS_URL, initialPost);
+      return res.data;
+    } catch (err) {
+      return err.message;
+    }
+  }
+);
 const postSlice = createSlice({
   name: "posts",
   initialState,
@@ -69,14 +81,14 @@ const postSlice = createSlice({
       }
     },
   },
-  extraReducers : (builder) => {
+  extraReducers: (builder) => {
     builder
       .addCase(fetchPosts.pending, (state, actions) => {
-          // console.log('pending')
+        // console.log('pending')
         state.status = "loading";
       })
       .addCase(fetchPosts.fulfilled, (state, action) => {
-          // console.log('full')
+        // console.log('full')
         state.status = "succeeded";
         //Adding date and reactions
         let min = 1;
@@ -94,9 +106,21 @@ const postSlice = createSlice({
         state.posts = state.posts.concat(loadedPosts);
       })
       .addCase(fetchPosts.rejected, (state, action) => {
-          // console.log('rej')
+        // console.log('rej')
         state.status = "failed";
         state.error = action.error.message;
+      })
+      .addCase(addNewPost.fulfilled, (state, action) => {
+        action.payload.userId = Number(action.payload.userId);
+        action.payload.date = new Date().toISOString();
+        action.payload.reactions = {
+          thumbsUp: 0,
+          wow: 0,
+          heart: 0,
+          rocket: 0,
+          coffee: 0,
+        };
+        state.posts.push(action.payload);
       });
   },
 });
